@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 from PIL import ImageFont, ImageDraw, Image
 
+filename = '../kingsreward_010.jpeg'
+
 def score(img1, img2):
 	diff = np.zeros(np.shape(img1))
 
@@ -12,27 +14,27 @@ def score(img1, img2):
 	return np.sum(diff), diff
 
 def generate_captcha(text):
+	offset = [10, 3]
+
 	#new grayscale canvas
 	pil_img = Image.new("L", (200, 58), "white")
 
 	#draw text
 	draw = ImageDraw.Draw(pil_img)
 	font = ImageFont.truetype("/Library/Fonts/Microsoft/Verdana.ttf", 37)
-	size = draw.textsize(text, font)
-	print(size)
-	draw.text((10, 3), text, font=font, fill=(0))
+	for ch in text:
+		draw.text(offset, ch, font=font, fill=(0))
+		offset[0] += draw.textsize(ch, font)[0]
 
-	return threshold(np.array(pil_img), .6), size
+	return threshold(np.array(pil_img), .6)
 
 def threshold(grayscale, threshold):
 	th, out = cv2.threshold(grayscale, threshold * 255, 255, cv2.THRESH_BINARY)
 	return out
 
 if __name__ == '__main__':
-	filename = '../kingsreward_001.jpeg'
 	alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	guess = 'xKQsdfsdf'
-	best_ch = ''
+	guess = ''
 
 	kr = threshold(cv2.imread(filename, cv2.IMREAD_GRAYSCALE), .6)
 
@@ -46,8 +48,10 @@ if __name__ == '__main__':
 
 	while len(guess) < 5:
 		base_score = score(kr, generate_captcha(guess))[0]
-		min_score = 10e10
-		guesses = []
+		max_usage = 0
+		max_gain = 0
+		guesses_usage = {}
+		guesses_scores = {}
 		for ch in alphabet:
 			ch_score, diff = score(generate_captcha(ch), generate_captcha(''))
 			# print(ch_score)
@@ -57,19 +61,27 @@ if __name__ == '__main__':
 			guess_score = score(kr, generate_captcha(guess + ch))[0]
 
 			gain = base_score - guess_score
-			guesses.append(((ch_score - gain), gain, ch, ch_score))
+			guesses_usage[ch] = gain/ch_score if gain <= ch_score else 0
+			guesses_scores[ch] = gain if gain > 0 else 0
 
-			if (ch_score - gain) < min_score:
-				min_score = (ch_score - gain)
-				best_ch = ch
+			max_usage = max(max_usage, gain/ch_score)
+			max_gain = max(max_gain, gain)
 
-		guess += best_ch
-		guesses.sort()
-		for line in guesses:
-			print(line)
+		final = {}
 
-		cv2.imshow("progress", score(kr, generate_captcha(guess))[1])
-		cv2.waitKey(0)
+		max_val = max(guesses_scores.values())
+		for ch in guesses_scores:
+			guesses_scores[ch] /= max_val
+
+		for ch in alphabet:
+			final[ch] = .35 * guesses_usage[ch] + .65 * guesses_scores[ch]
+		
+		# print sorted(guesses_usage.items(), key=lambda x: x[1])
+		# print sorted(guesses_scores.items(), key=lambda x: x[1])
+		# print sorted(final.items(), key=lambda x: x[1])
+		guess += max(final.items(), key=lambda x: x[1])[0]
+		# cv2.imshow("progress", score(kr, generate_captcha(guess))[1])
+		# cv2.waitKey(0)
 
 		#print min_score
 
