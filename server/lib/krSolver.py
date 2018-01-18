@@ -1,8 +1,10 @@
 import numpy as np
 import cv2
+import requests
 from PIL import ImageFont, ImageDraw, Image
+from io import BytesIO
 
-filename = './data/kingsreward_000.jpeg'
+#filename = './data/kingsreward_000.jpeg'
 
 def score(img1, img2):
 	diff = np.zeros(np.shape(img1))
@@ -32,11 +34,16 @@ def threshold(grayscale, threshold):
 	th, out = cv2.threshold(grayscale, threshold * 255, 255, cv2.THRESH_BINARY)
 	return out
 
-if __name__ == '__main__':
+def solve(cookie, url):
+	cookies = dict(PHPSESSID=cookie)
+	r = requests.get(url, cookies=cookies)
+	img = Image.open(BytesIO(r.content))
+	kr = threshold(cv2.cvtColor(np.array(img), cv2.COLOR_BGR2GRAY), .6)
+
 	alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	guess = ''
 
-	kr = threshold(cv2.imread(filename, cv2.IMREAD_GRAYSCALE), .6)
+	#kr = threshold(cv2.imread(filename, cv2.IMREAD_GRAYSCALE), .6)
 
 	# sc1, im1 = score(kr, generate_captcha('xKQ'))
 	# sc2, im2 = score(kr, generate_captcha('xKQj'))
@@ -69,7 +76,7 @@ if __name__ == '__main__':
 
 		final = {}
 
-		max_val = max(guesses_scores.values())
+		max_val = max(guesses_scores.values()) + .1
 		for ch in guesses_scores:
 			guesses_scores[ch] /= max_val
 
@@ -85,4 +92,8 @@ if __name__ == '__main__':
 
 		#print(min_score)
 
-	print(guess)
+	return guess
+
+if __name__ == '__main__':
+	#solve()
+	pass
