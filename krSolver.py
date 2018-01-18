@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from PIL import ImageFont, ImageDraw, Image
 
-filename = '../kingsreward_010.jpeg'
+filename = './data/kingsreward_000.jpeg'
 
 def score(img1, img2):
 	diff = np.zeros(np.shape(img1))
@@ -40,8 +40,8 @@ if __name__ == '__main__':
 
 	# sc1, im1 = score(kr, generate_captcha('xKQ'))
 	# sc2, im2 = score(kr, generate_captcha('xKQj'))
-	# print sc1
-	# print sc2
+	# print(sc1)
+	# print(sc2)
 	# cv2.imshow("progress1", im1)
 	# cv2.imshow("progress2", im2)
 	# cv2.waitKey(0)
@@ -76,13 +76,13 @@ if __name__ == '__main__':
 		for ch in alphabet:
 			final[ch] = .35 * guesses_usage[ch] + .65 * guesses_scores[ch]
 		
-		# print sorted(guesses_usage.items(), key=lambda x: x[1])
-		# print sorted(guesses_scores.items(), key=lambda x: x[1])
-		# print sorted(final.items(), key=lambda x: x[1])
+		# print(sorted(guesses_usage.items(), key=lambda x: x[1]))
+		# print(sorted(guesses_scores.items(), key=lambda x: x[1]))
+		# print(sorted(final.items(), key=lambda x: x[1]))
 		guess += max(final.items(), key=lambda x: x[1])[0]
 		# cv2.imshow("progress", score(kr, generate_captcha(guess))[1])
 		# cv2.waitKey(0)
 
-		#print min_score
+		#print(min_score)
 
 	print(guess)
